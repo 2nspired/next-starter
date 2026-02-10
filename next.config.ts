@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 /**
- * Import env to validate environment variables at build time.
+ * Validate environment variables at build time.
+ * In development, validation is skipped so `npm run dev` works out of the box.
  * @see src/env.ts for the schema definition
  */
 import "./src/env";

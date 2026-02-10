@@ -21,6 +21,11 @@ export type Auth = {
 };
 
 export async function getSessionUser() {
+	// Skip when Supabase is not configured (allows dev server to boot without env vars)
+	if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+		return null;
+	}
+
 	const supabase = await supabaseServerClient();
 	const {
 		data: { user },

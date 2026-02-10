@@ -30,6 +30,7 @@ export const env = createEnv({
 				: "http://localhost:3000"),
 	},
 
-	skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+	skipValidation:
+		!!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === "development",
 	emptyStringAsUndefined: true,
 });
