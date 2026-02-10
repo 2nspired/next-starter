@@ -20,10 +20,12 @@ A full-stack Next.js starter template with Supabase auth, tRPC, Prisma, and shad
 
 ## Getting Started
 
-### 1. Clone and install
+### 1. Create a new repo from the template
+
+Click **"Use this template"** → **"Create a new repository"** on GitHub, then:
 
 ```bash
-git clone <your-repo-url> my-app
+git clone <your-new-repo-url> my-app
 cd my-app
 npm install
 ```
@@ -35,7 +37,7 @@ Go to [supabase.com/dashboard](https://supabase.com/dashboard) and create a new 
 ### 3. Configure environment variables
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
 Fill in the values from your Supabase project dashboard:
