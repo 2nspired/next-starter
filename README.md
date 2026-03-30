@@ -1,6 +1,8 @@
 # Next Starter
 
-A full-stack Next.js starter template with Supabase auth, tRPC, Prisma, and shadcn/ui. Includes an example CRUD entity demonstrating the complete router → service → Prisma flow.
+A production-ready Next.js starter template for spinning up full-stack projects fast. Includes authentication, database, type-safe API, UI components, and an example CRUD entity demonstrating the complete flow from client to database.
+
+Use this template so you skip project setup and go straight to building features.
 
 ## Tech Stack
 
@@ -22,7 +24,7 @@ A full-stack Next.js starter template with Supabase auth, tRPC, Prisma, and shad
 
 ### 1. Create a new repo from the template
 
-Click **"Use this template"** → **"Create a new repository"** on GitHub, then:
+Click **"Use this template"** on GitHub, then:
 
 ```bash
 git clone <your-new-repo-url> my-app
@@ -51,14 +53,14 @@ Fill in the values from your Supabase project dashboard:
 | `DIRECT_URL` | Settings → Database → Connection string (Direct, port **5432**) |
 
 **Why two database URLs?**
-- `DATABASE_URL` uses the **connection pooler** (port 6543) — used at runtime by `@prisma/adapter-pg` for efficient connection management.
-- `DIRECT_URL` uses a **direct connection** (port 5432) — used only for migrations (`prisma migrate`), which need a persistent connection.
+- `DATABASE_URL` uses the **connection pooler** (port 6543) — used at runtime by `@prisma/adapter-pg`.
+- `DIRECT_URL` uses a **direct connection** (port 5432) — used only for migrations (`prisma migrate`).
 
 ### 4. Run SQL setup scripts
 
 Open the **SQL Editor** in your Supabase dashboard and run these files in order:
 
-1. **`sql/01-trigger.sql`** — Creates a trigger that automatically inserts a `user_profile` row whenever a new user signs up via Supabase Auth.
+1. **`sql/01-trigger.sql`** — Creates a trigger that inserts a `user_profile` row when a new user signs up via Supabase Auth.
 2. **`sql/02-rls-policies.sql`** — Enables Row Level Security on `user_profile` and `item` tables so users can only access their own data.
 
 ### 5. Run Prisma migrations
@@ -82,7 +84,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 src/
 ├── app/                          # Next.js App Router
-│   ├── (auth)/                   # Auth route group (login, signup, etc.)
+│   ├── (auth)/                   # Auth route group (login, signup, password reset)
 │   │   ├── auth/
 │   │   │   ├── actions.ts        # Server actions (login, signup, reset)
 │   │   │   ├── confirm/route.ts  # Email confirmation handler
@@ -109,34 +111,34 @@ src/
 │   └── ui/                       # shadcn/ui components
 ├── lib/
 │   ├── schemas/                  # Zod validation schemas
-│   ├── format-date.ts            # Date formatting utilities
+│   ├── format-date.ts            # Date formatting utility
 │   ├── get-base-url.ts           # URL detection utility
 │   └── utils.ts                  # cn() class merge utility
 ├── server/
 │   ├── api/
 │   │   ├── routers/              # tRPC routers (item, user)
-│   │   ├── root.ts               # App router
+│   │   ├── root.ts               # App router (merges all sub-routers)
 │   │   └── trpc.ts               # tRPC init, context, procedures
 │   ├── services/
 │   │   ├── types/                # ServiceResult type
-│   │   ├── item-service.ts       # Item CRUD service
+│   │   ├── item-service.ts       # Item CRUD business logic
 │   │   └── user-service.ts       # User service
 │   └── db.ts                     # Prisma client singleton
 ├── trpc/
 │   ├── query-client.ts           # React Query config
-│   ├── react.tsx                 # tRPC client provider
+│   ├── react.tsx                 # tRPC React client + provider
 │   └── server.ts                 # tRPC server caller + hydration
 ├── types/
-│   └── action-result.ts          # ActionResult type
+│   └── action-result.ts          # ActionResult type for server actions
 ├── utilities/
-│   ├── auth/server.ts            # getAuth(), getSessionUser()
+│   ├── auth/server.ts            # getAuth(), getSessionUser(), getUserProfile()
 │   └── supabase/
 │       ├── admin.ts              # Supabase admin client (service_role)
 │       ├── client.ts             # Browser Supabase client
 │       ├── middleware.ts          # Session refresh middleware
 │       └── server.ts             # Server Supabase client
-├── env.ts                        # T3 env validation
-└── proxy.ts                      # Next.js proxy (auth middleware)
+├── env.ts                        # T3 env validation schema
+└── proxy.ts                      # Next.js middleware (auth session refresh)
 ```
 
 ## Architecture
@@ -208,10 +210,9 @@ npx shadcn@latest add [component-name]
 
 ### Add a new environment variable
 
-1. Add to `.env.local`
+1. Add to `.env` and `.env.example`
 2. Add validation in `src/env.ts` (server or client section)
 3. Add to `runtimeEnv` mapping
-4. Document in `.env.example`
 
 ### Run tests
 
@@ -221,19 +222,34 @@ npx vitest            # Run in watch mode
 npx vitest --ui       # Run with UI
 ```
 
+### Available Scripts
+
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Start dev server with Turbopack |
+| `npm run build` | Generate Prisma client + production build |
+| `npm run lint` | Check code with Biome |
+| `npm run lint:fix` | Auto-fix lint issues |
+| `npm run format` | Format code with Biome |
+| `npm run type-check` | Run TypeScript type checking |
+| `npm run db:generate` | Regenerate Prisma client |
+| `npm run db:push` | Push schema to database (no migration) |
+| `npm run db:migrate` | Create and run a migration |
+| `npm run db:studio` | Open Prisma Studio |
+
 ## Supabase Setup
 
-### auth.users ↔ user_profile
+### auth.users → user_profile
 
 Supabase manages authentication in the `auth` schema. When a user signs up, the `on_auth_user_created` trigger automatically creates a matching row in `public.user_profile`. This keeps your app's user data in the `public` schema where Prisma can manage it, while Supabase handles passwords, sessions, and email verification.
 
 ### Row Level Security (RLS)
 
-RLS policies ensure users can only read/write their own data at the database level. Even if your application code has a bug, RLS prevents data leaks. The policies in `sql/02-rls-policies.sql` scope all operations to `auth.uid()` — the currently authenticated user's ID.
+RLS policies ensure users can only read/write their own data at the database level. Even if your application code has a bug, RLS prevents data leaks. The policies in `sql/02-rls-policies.sql` scope all operations to `auth.uid()`.
 
 ## Production Checklist
 
-Things to add per-project:
+Things to configure per-project:
 
 - [ ] Rate limiting (e.g., `@upstash/ratelimit`)
 - [ ] Content Security Policy headers
